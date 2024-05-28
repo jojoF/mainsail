@@ -18,6 +18,10 @@ export default class ControlMixin extends Vue {
 
     get feedrateZ() {
         return this.$store.state.gui.control?.feedrateZ ?? 10
+    }    
+    
+    get feedrateA() {
+        return this.$store.state.gui.control?.feedrateA ?? 10
     }
 
     get existsQGL() {
@@ -84,6 +88,18 @@ export default class ControlMixin extends Vue {
         return this.homedAxes.includes('z')
     }
 
+    stepperEnabled(stepper : string): boolean {
+        return this.$store.state.printer?.stepper_enable.steppers[stepper]
+    }
+
+    get stepperAEnabled(): boolean {
+        return this.stepperEnabled('stepper_a')
+    }
+
+    get stepperBEnabled(): boolean {
+        return this.stepperEnabled('stepper_b')
+    }
+
     get macros() {
         return this.$store.getters['printer/getMacros']
     }
@@ -132,6 +148,11 @@ export default class ControlMixin extends Vue {
     doZtilt() {
         this.$store.dispatch('server/addEvent', { message: 'Z_TILT_ADJUST', type: 'command' })
         this.$socket.emit('printer.gcode.script', { script: 'Z_TILT_ADJUST' }, { loading: 'zTilt' })
+    }
+
+    toggleStepperEnable(stepper : string) {
+        stepper = "SET_STEPPER_ENABLE STEPPER=" + stepper + " ENABLE=" + (this.stepperEnabled(stepper) ? "0" : "1")
+        this.doSend(stepper)
     }
 
     doSendMove(gcode: string, feedrate: number) {

@@ -146,6 +146,66 @@
                 </v-item-group>
             </v-col>
         </v-row>
+        <!-- A MOVEMENT BUTTONGROUPS -->
+        <v-row dense>
+            <v-col class="text-center">
+                <v-item-group class="_btn-group row no-gutters">
+                    <v-btn
+                        v-for="steps of stepsAsorted"
+                        :key="'a-' + steps"
+                        :disabled="['printing'].includes(printer_state)"
+                        class="btnMinWidthAuto col btnGroup"
+                        @click="doSendMove('A-' + steps, feedrateA)">
+                        <span class="body-2">–{{ steps }}</span>
+                    </v-btn>
+                    <v-btn
+                        :disabled="['printing'].includes(printer_state)"
+                        :color="stepperAEnabled ? 'primary' : 'warning'"
+                        class="font-weight-bold btnHomeAxis btnGroup"
+                        @click="toggleStepperEnable('stepper_a')">
+                        A
+                    </v-btn>
+                    <v-btn
+                        v-for="steps of stepsAsortedReverse"
+                        :key="'a+' + steps"
+                        :disabled="['printing'].includes(printer_state)"
+                        class="btnMinWidthAuto col btnGroup"
+                        @click="doSendMove('A+' + steps, feedrateA)">
+                        <span class="body-2">+{{ steps }}</span>
+                    </v-btn>
+                </v-item-group>
+            </v-col>
+        </v-row>
+        <!-- B MOVEMENT BUTTONGROUPS -->
+        <v-row dense>
+            <v-col class="text-center">
+                <v-item-group class="_btn-group row no-gutters">
+                    <v-btn
+                        v-for="steps of stepsAsorted"
+                        :key="'b-' + steps"
+                        :disabled="['printing'].includes(printer_state)"
+                        class="btnMinWidthAuto col btnGroup"
+                        @click="doSendMove('B-' + steps, feedrateA)">
+                        <span class="body-2">–{{ steps }}</span>
+                    </v-btn>
+                    <v-btn
+                        :disabled="['printing'].includes(printer_state)"
+                        :color="stepperBEnabled ? 'primary' : 'warning'"
+                        class="font-weight-bold btnHomeAxis btnGroup"
+                        @click="toggleStepperEnable('stepper_b')">
+                        B
+                    </v-btn>
+                    <v-btn
+                        v-for="steps of stepsAsortedReverse"
+                        :key="'b+' + steps"
+                        :disabled="['printing'].includes(printer_state)"
+                        class="btnMinWidthAuto col btnGroup"
+                        @click="doSendMove('B+' + steps, feedrateA)">
+                        <span class="body-2">+{{ steps }}</span>
+                    </v-btn>
+                </v-item-group>
+            </v-col>
+        </v-row>
     </div>
 </template>
 
@@ -184,6 +244,18 @@ export default class BarsControl extends Mixins(BaseMixin, ControlMixin) {
 
     get stepsZsortedReverse() {
         return [...this.$store.state.gui.control.stepsZ].sort(function (a, b) {
+            return a - b
+        })
+    }    
+    
+    get stepsAsorted() {
+        return [...this.$store.state.gui.control.stepsA].sort(function (a, b) {
+            return b - a
+        })
+    }
+
+    get stepsAsortedReverse() {
+        return [...this.$store.state.gui.control.stepsA].sort(function (a, b) {
             return a - b
         })
     }

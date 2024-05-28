@@ -36,7 +36,7 @@
                     </v-col>
                 </v-row>
                 <v-row v-if="showCoordinates" dense>
-                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-4'">
+                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-3'">
                         <move-to-input
                             v-model="input.x.pos"
                             :label="livePositions.x"
@@ -47,7 +47,7 @@
                             :disabled="!xAxisHomed"
                             @submit="sendCmd"></move-to-input>
                     </v-col>
-                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-4'">
+                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-3'">
                         <move-to-input
                             v-model="input.y.pos"
                             :label="livePositions.y"
@@ -58,7 +58,7 @@
                             :disabled="!yAxisHomed"
                             @submit="sendCmd"></move-to-input>
                     </v-col>
-                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-4'">
+                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-3'">
                         <move-to-input
                             v-model="input.z.pos"
                             :label="livePositions.z"
@@ -67,6 +67,28 @@
                             :current-pos="gcodePositions.z"
                             :readonly="['printing'].includes(printer_state)"
                             :disabled="!zAxisHomed"
+                            @submit="sendCmd"></move-to-input>
+                    </v-col>
+                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-3'">
+                        <move-to-input
+                            v-model="input.a.pos"
+                            :label="livePositions.a"
+                            :suffix="'A'"
+                            :step="0.001"
+                            :current-pos="gcodePositions.a"
+                            :readonly="['printing'].includes(printer_state)"
+                            :disabled="!stepperAEnabled"
+                            @submit="sendCmd"></move-to-input>
+                    </v-col>
+                    <v-col :class="el.is.xsmall ? 'col-12' : 'col-3'">
+                        <move-to-input
+                            v-model="input.b.pos"
+                            :label="livePositions.b"
+                            :suffix="'B'"
+                            :step="0.001"
+                            :current-pos="gcodePositions.b"
+                            :readonly="['printing'].includes(printer_state)"
+                            :disabled="!stepperBEnabled"
                             @submit="sendCmd"></move-to-input>
                     </v-col>
                 </v-row>
@@ -94,6 +116,8 @@ export default class MoveToControl extends Mixins(BaseMixin, ControlMixin) {
         x: { pos: '', valid: true },
         y: { pos: '', valid: true },
         z: { pos: '', valid: true },
+        a: { pos: '', valid: true },
+        b: { pos: '', valid: true },
     }
 
     @Watch('gcodePositions.x', { immediate: true })
@@ -110,6 +134,16 @@ export default class MoveToControl extends Mixins(BaseMixin, ControlMixin) {
     updatePositionZ(newVal: string): void {
         this.input.z.pos = newVal
     }
+    
+    @Watch('gcodePositions.a', { immediate: true })
+    updatePositionA(newVal: string): void {
+        this.input.a.pos = newVal
+    }
+
+    @Watch('gcodePositions.b', { immediate: true })
+    updatePositionB(newVal: string): void {
+        this.input.b.pos = newVal
+    }
 
     /**
      * Axes positions and positioning mode (G90 / G91)
@@ -125,20 +159,24 @@ export default class MoveToControl extends Mixins(BaseMixin, ControlMixin) {
     }
 
     get livePositions() {
-        const pos = this.$store.state.printer.motion_report?.live_position ?? [0, 0, 0]
+        const pos = this.$store.state.printer.motion_report?.live_position ?? [0, 0, 0, 0, 0]
         return {
             x: pos[0]?.toFixed(2) ?? '--',
             y: pos[1]?.toFixed(2) ?? '--',
             z: pos[2]?.toFixed(3) ?? '--',
+            a: pos[3]?.toFixed(3) ?? '--',
+            b: pos[4]?.toFixed(3) ?? '--',
         }
     }
 
     get gcodePositions() {
-        const pos = this.$store.state.printer.gcode_move?.gcode_position ?? [0, 0, 0]
+        const pos = this.$store.state.printer.gcode_move?.gcode_position ?? [0, 0, 0, 0, 0]
         return {
             x: pos[0]?.toFixed(2) ?? '--',
             y: pos[1]?.toFixed(2) ?? '--',
             z: pos[2]?.toFixed(3) ?? '--',
+            a: pos[3]?.toFixed(3) ?? '--',
+            b: pos[4]?.toFixed(3) ?? '--',
         }
     }
 
@@ -173,6 +211,8 @@ export default class MoveToControl extends Mixins(BaseMixin, ControlMixin) {
         const xPos = this.input.x.pos !== this.gcodePositions.x ? ` X${this.input.x.pos}` : ''
         const yPos = this.input.y.pos !== this.gcodePositions.y ? ` Y${this.input.y.pos}` : ''
         const zPos = this.input.z.pos !== this.gcodePositions.z ? ` Z${this.input.z.pos}` : ''
+        const aPos = this.input.a.pos !== this.gcodePositions.a ? ` A${this.input.a.pos}` : ''
+        const bPos = this.input.b.pos !== this.gcodePositions.b ? ` B${this.input.b.pos}` : ''
 
         let gcode = ''
         if (!this.positionAbsolute) {
@@ -183,6 +223,9 @@ export default class MoveToControl extends Mixins(BaseMixin, ControlMixin) {
         }
         if (xPos !== '' || yPos !== '') {
             gcode += `G1${xPos}${yPos} F${this.feedrateXY * 60}`
+        }
+        if (aPos !== '' || bPos !== '') {
+            gcode += `G0${aPos}${bPos}`
         }
 
         if (gcode !== '' && this.input.x.valid && this.input.y.valid && this.input.z.valid) {

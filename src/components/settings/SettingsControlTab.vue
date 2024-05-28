@@ -67,6 +67,18 @@
                         hide-spin-buttons
                         @blur="blurFeedrateZ" />
                 </settings-row>
+                <settings-row :title="$t('Settings.ControlTab.SpeedA')">
+                    <v-text-field
+                        v-model="feedrateA"
+                        type="number"
+                        suffix="deg/s"
+                        hide-details="auto"
+                        :rules="[(v) => v > 0 || $t('Settings.ControlTab.ValueGreaterThan', { value: '0' })]"
+                        outlined
+                        dense
+                        hide-spin-buttons
+                        @blur="blurFeedrateA" />
+                </settings-row>
                 <v-divider class="my-2" />
                 <!-- CONTROL STYLE CROSS SPECIFICS -->
                 <template v-if="controlStyle === 'cross'">
@@ -159,6 +171,27 @@
                     <settings-row :title="$t('Settings.ControlTab.MoveDistancesZInMm')" :mobile-second-row="true">
                         <v-combobox
                             v-model="stepsZ"
+                            hide-selected
+                            hide-details="auto"
+                            multiple
+                            small-chips
+                            :deletable-chips="true"
+                            append-icon=""
+                            type="number"
+                            :rules="[
+                                (v) => v.length > 0 || $t('Settings.ControlTab.MinimumValues', { minimum: '1' }),
+                                (v) =>
+                                    v.length <= 3 ||
+                                    $t('Settings.ControlTab.MaximumValuesVisibility', { maximum: '3' }),
+                            ]"
+                            dense
+                            outlined
+                            hide-spin-buttons />
+                    </settings-row>
+                    <v-divider class="my-2" />
+                    <settings-row :title="$t('Settings.ControlTab.MoveDistancesAInDeg')" :mobile-second-row="true">
+                        <v-combobox
+                            v-model="stepsA"
                             hide-selected
                             hide-details="auto"
                             multiple
@@ -405,6 +438,14 @@ export default class SettingsControlTab extends Mixins(BaseMixin, ControlMixin, 
         this.$store.dispatch('gui/saveSetting', { name: 'control.feedrateZ', value: newVal })
     }
 
+    get feedrateA() {
+        return this.$store.state.gui.control.feedrateA
+    }
+
+    set feedrateA(newVal) {
+        this.$store.dispatch('gui/saveSetting', { name: 'control.feedrateA', value: newVal })
+    }
+
     get offsetsZ() {
         const steps = this.$store.state.gui.control.offsetsZ
         return steps.sort(function (a: number, b: number) {
@@ -462,6 +503,21 @@ export default class SettingsControlTab extends Mixins(BaseMixin, ControlMixin, 
         const steps = absSteps.filter(this.onlyUnique)
 
         this.$store.dispatch('gui/saveSetting', { name: 'control.stepsZ', value: steps })
+    }
+
+    get stepsA() {
+        const steps = this.$store.state.gui.control.stepsA
+        return steps.sort(function (a: number, b: number) {
+            return b - a
+        })
+    }
+
+    set stepsA(newVal) {
+        const absSteps = []
+        for (const value of newVal) absSteps.push(Math.abs(value))
+        const steps = absSteps.filter(this.onlyUnique)
+
+        this.$store.dispatch('gui/saveSetting', { name: 'control.stepsA', value: steps })
     }
 
     get stepsCircleXY() {
@@ -573,6 +629,10 @@ export default class SettingsControlTab extends Mixins(BaseMixin, ControlMixin, 
 
     blurFeedrateZ() {
         if (!(this.feedrateZ > 0)) this.feedrateZ = 25
+    }
+
+    blurFeedrateA() {
+        if (!(this.feedrateA > 0)) this.feedrateA = 30
     }
 
     onlyUnique(value: any, index: any, self: any[]) {
